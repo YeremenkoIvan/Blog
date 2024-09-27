@@ -1,10 +1,8 @@
 import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
-import { AppController } from "./app.controller";
-import { AppService } from "./app.service";
 import config from "./core/config";
 import { UserModule } from "./modules/index";
-import { User, Role } from "./entities/index";
+import { User, PostEntity } from "./entities/index";
 
 @Module({
     imports: [
@@ -15,13 +13,13 @@ import { User, Role } from "./entities/index";
             username: config.DB_USERNAME,
             password: config.DB_PASSWORD,
             database: config.DB_NAME,
-            entities: [User, Role],
+            entities: [User, PostEntity],
             synchronize: true
             // logging: true
         }),
         UserModule
     ],
-    controllers: [AppController],
-    providers: [AppService]
+    controllers: [],
+    providers: []
 })
 export class AppModule {}

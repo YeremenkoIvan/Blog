@@ -1,44 +1,59 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
-import { User } from "../entities/user.entity";
+import { User, PostEntity } from "../entities/index";
 
 @Injectable()
 export class UserService {
     constructor(
         @InjectRepository(User)
-        private usersRepository: Repository<User>
+        private userRepository: Repository<User>,
+        @InjectRepository(PostEntity)
+        private postRepository: Repository<PostEntity>
     ) {}
 
-    async create(user: Partial<User>): Promise<User> {
-        return await this.usersRepository.save(user);
+    // Создать нового пользователя
+    async createUser(
+        username: string,
+        email: string,
+        password: string
+    ): Promise<User> {
+        const user = this.userRepository.create({ username, email, password });
+        return await this.userRepository.save(user);
     }
 
-    async findAll(): Promise<User[]> {
-        return await this.usersRepository.find({ relations: ["role"] });
+    // Получить всех пользователей с их постами
+    async getAllUsers(): Promise<User[]> {
+        return await this.userRepository.find({ relations: ["posts"] });
     }
 
-    async findAllById(id: number): Promise<User | null> {
-        return await this.usersRepository.findOne({
-            where: { id },
-            relations: ["role"]
+    // Создать новый пост для пользователя
+    async createPostForUser(
+        userId: number,
+        title: string,
+        category: string,
+        tags: string,
+        content: string
+    ): Promise<PostEntity> {
+        const user = await this.userRepository.findOne({
+            where: { id: userId }
         });
-    }
-
-    async update(id: number, updateUserDto: Partial<User>): Promise<User> {
-        const user = await this.usersRepository.findOneBy({ id });
         if (!user) {
-            throw new NotFoundException(`User with id ${id} not found`);
+            throw new Error("User not found");
         }
 
-        Object.assign(user, updateUserDto);
-        return this.usersRepository.save(user);
+        const post = this.postRepository.create({
+            title,
+            category,
+            tags,
+            content,
+            user
+        });
+        return await this.postRepository.save(post);
     }
 
-    async remove(id: number): Promise<void> {
-        const result = await this.usersRepository.delete(id);
-        if (result.affected === 0) {
-            throw new NotFoundException(`User with id ${id} not found`);
-        }
+    // Получить все посты
+    async getAllPosts(): Promise<PostEntity[]> {
+        return await this.postRepository.find({ relations: ["user"] });
     }
 }

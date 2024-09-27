@@ -1,4 +1,4 @@
 import { User } from "./user.entity";
-import { Role } from "./role.entity";
+import { PostEntity } from "./post.entity";
 
-export { User, Role };
+export { User, PostEntity };

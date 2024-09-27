@@ -1,44 +1,47 @@
-import {
-    Controller,
-    Get,
-    Post,
-    Put,
-    Delete,
-    Body,
-    Param
-} from "@nestjs/common";
-import { UserService } from "../services/user.service";
-import { User } from "../entities/user.entity";
-import { UpdateUserDto } from "../dto/update.user.dto";
+import { Controller, Post, Get, Param, Body } from "@nestjs/common";
+import { UserService } from "../services/index";
 
 @Controller("users")
 export class UserController {
     constructor(private readonly userService: UserService) {}
+
+    // Создание пользователя
     @Post()
-    async create(@Body() user: Partial<User>): Promise<User> {
-        return await this.userService.create(user);
+    createUser(
+        @Body("username") username: string,
+        @Body("email") email: string,
+        @Body("password") password: string
+    ) {
+        return this.userService.createUser(username, email, password);
     }
 
+    // Получение всех пользователей с их постами
     @Get()
-    async findAll(): Promise<User[]> {
-        return await this.userService.findAll();
+    getAllUsers() {
+        return this.userService.getAllUsers();
     }
 
-    @Get(":id")
-    async findAllById(@Param("id") id: string): Promise<User | null> {
-        return await this.userService.findAllById(Number(id));
+    // Создание поста для пользователя
+    @Post(":userId/posts")
+    createPostForUser(
+        @Param("userId") userId: number,
+        @Body("title") title: string,
+        @Body("category") category: string,
+        @Body("tags") tags: string,
+        @Body("content") content: string
+    ) {
+        return this.userService.createPostForUser(
+            userId,
+            title,
+            category,
+            tags,
+            content
+        );
     }
 
-    @Put(":id")
-    async update(
-        @Param("id") id: string,
-        @Body() updateUserDto: UpdateUserDto
-    ): Promise<User> {
-        return this.userService.update(Number(id), updateUserDto);
-    }
-
-    @Delete(":id")
-    async remove(@Param("id") id: string): Promise<void> {
-        return await this.userService.remove(Number(id));
+    // Получение всех постов
+    @Get("posts")
+    getAllPosts() {
+        return this.userService.getAllPosts();
     }
 }
