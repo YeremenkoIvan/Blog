@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from "typeorm";
 import { IsEmail, IsNotEmpty } from "class-validator";
-import { PostEntity, Token } from "./index";
+import { PostEntity, Token, Comment } from "./index";
 
 @Entity()
 export class User {
@@ -23,6 +23,9 @@ export class User {
 
     @OneToMany(() => PostEntity, (post) => post.user)
     posts: PostEntity[];
+
+    @OneToMany(() => Comment, (comments) => comments.user) // Добавьте это
+    comments: Comment[];
 
     @OneToMany(() => Token, (token) => token.user)
     tokens: Token[];

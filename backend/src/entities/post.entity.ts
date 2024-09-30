@@ -3,9 +3,10 @@ import {
     Column,
     PrimaryGeneratedColumn,
     ManyToOne,
+    OneToMany,
     CreateDateColumn
 } from "typeorm";
-import { User } from "./index";
+import { User, Comment } from "./index";
 
 @Entity()
 export class PostEntity {
@@ -26,6 +27,9 @@ export class PostEntity {
 
     @CreateDateColumn({ type: "timestamp" })
     createdAt: Date;
+
+    @OneToMany(() => Comment, (comment) => comment.post) // Добавьте это
+    comments: Comment[];
 
     // Много постов может принадлежать одному пользователю
     @ManyToOne(() => User, (user) => user.posts)
