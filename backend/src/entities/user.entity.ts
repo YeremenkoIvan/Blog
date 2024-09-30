@@ -1,6 +1,6 @@
 import { Entity, Column, PrimaryGeneratedColumn, OneToMany } from "typeorm";
 import { IsEmail, IsNotEmpty } from "class-validator";
-import { PostEntity } from "./index";
+import { PostEntity, Token } from "./index";
 
 @Entity()
 export class User {
@@ -21,7 +21,9 @@ export class User {
     @Column({ default: false })
     isAdmin: boolean;
 
-    // Один пользователь может иметь много постов
     @OneToMany(() => PostEntity, (post) => post.user)
     posts: PostEntity[];
+
+    @OneToMany(() => Token, (token) => token.user)
+    tokens: Token[];
 }

@@ -1,27 +1,51 @@
-import { Controller, Post, Get, Param, Body } from "@nestjs/common";
+import {
+    Controller,
+    Post,
+    Get,
+    Param,
+    Body,
+    UseGuards,
+    Request
+} from "@nestjs/common";
 import { UserService } from "../services/index";
+import { AuthGuard } from "src/guards/auth.guard";
 
 @Controller("users")
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
-    // Создание пользователя
-    @Post()
-    createUser(
+    @Post("register")
+    async register(
         @Body("username") username: string,
         @Body("email") email: string,
         @Body("password") password: string
-    ) {
-        return this.userService.createUser(username, email, password);
+    ): Promise<{ token: string }> {
+        return this.userService.register(username, email, password);
+    }
+
+    @Post("login")
+    async login(
+        @Body("username") username: string,
+        @Body("password") password: string
+    ): Promise<{ token: string }> {
+        return this.userService.login(username, password);
+    }
+
+    // Получение пользователя по токену
+    @Get("/getByToken")
+    @UseGuards(AuthGuard) // Используйте охранник для защиты маршрута
+    async getUserByToken(@Request() req) {
+        const token = req.headers["authorization"]; // Извлекаем токен из заголовка
+        return this.userService.getUserByToken(token); // Передаем токен в сервис
     }
 
     // Получение всех пользователей с их постами
     @Get()
+    @UseGuards(AuthGuard)
     getAllUsers() {
         return this.userService.getAllUsers();
     }
 
-    // Создание поста для пользователя
     @Post(":userId/posts")
     createPostForUser(
         @Param("userId") userId: number,

@@ -2,7 +2,7 @@ import { Module } from "@nestjs/common";
 import { TypeOrmModule } from "@nestjs/typeorm";
 import config from "./core/config";
 import { UserModule } from "./modules/index";
-import { User, PostEntity } from "./entities/index";
+import { User, PostEntity, Token } from "./entities/index";
 
 @Module({
     imports: [
@@ -13,7 +13,7 @@ import { User, PostEntity } from "./entities/index";
             username: config.DB_USERNAME,
             password: config.DB_PASSWORD,
             database: config.DB_NAME,
-            entities: [User, PostEntity],
+            entities: [User, PostEntity, Token],
             synchronize: true
             // logging: true
         }),
