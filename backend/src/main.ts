@@ -5,6 +5,12 @@ import config from "./core/config";
 
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
+
+    app.enableCors({
+        origin: "http://localhost:3000", // Домен, который может делать запросы
+        methods: "GET,HEAD,PUT,PATCH,POST,DELETE", // Методы, которые разрешены
+        credentials: true // Разрешить передачу куки
+    });
     const swagger = new DocumentBuilder()
         .setTitle("My Application")
         .setDescription("API documentation for my application")

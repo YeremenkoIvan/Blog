@@ -2,7 +2,8 @@ import {
     Injectable,
     Inject,
     forwardRef,
-    UnauthorizedException
+    UnauthorizedException,
+    ConflictException
 } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -25,51 +26,75 @@ export class UserService {
         username: string,
         email: string,
         password: string
-    ): Promise<{ token: string }> {
+    ): Promise<{ status: string; message?: string; token?: string }> {
         const newUser = this.userRepository.create({
             username,
             email,
-            password: await bcrypt.hash(password, 10) // Хешируем пароль
+            password: await bcrypt.hash(password, 10)
         });
-        const savedUser = await this.userRepository.save(newUser);
-        const tokenEntity = await this.tokenService.createToken(savedUser);
 
-        return { token: tokenEntity.token };
+        try {
+            const savedUser = await this.userRepository.save(newUser);
+            const tokenEntity = await this.tokenService.createToken(savedUser);
+
+            return {
+                status: "200", // Успех
+                token: tokenEntity.token,
+                message: "Registration successful"
+            };
+        } catch (error) {
+            if (error.code === "23505") {
+                // Код конфликта для уникальных ограничений
+                return {
+                    status: "409", // Конфликт
+                    message: "Username or email already exists"
+                };
+            }
+            // В случае других ошибок можно вернуть статус 500
+            return {
+                status: "500",
+                message: "An error occurred during registration"
+            };
+        }
     }
 
     async login(
         username: string,
         password: string
-    ): Promise<{ token: string }> {
-        // Находим пользователя по имени пользователя
+    ): Promise<{ status: string; message?: string; token?: string }> {
         const user = await this.userRepository.findOne({ where: { username } });
 
         if (!user) {
-            throw new UnauthorizedException("Пользователь не найден"); // Если пользователь не найден
+            return {
+                status: "409",
+                message: "User not found"
+            };
         }
 
-        // Сравниваем введенный пароль с сохраненным хешем
         const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
-            throw new UnauthorizedException("Неверный пароль"); // Если пароль неверный
+            return {
+                status: "409",
+                message: "Invalid password"
+            };
         }
 
-        // Создаем токен, если учетные данные верны
         const tokenEntity = await this.tokenService.createToken(user);
-        return { token: tokenEntity.token };
+        return {
+            status: "200",
+            message: "Login succesful",
+            token: tokenEntity.token
+        };
     }
 
     async getUserByToken(token: string): Promise<User | null> {
-        // Получите токен без "Bearer " если это включено
-        // const actualToken = token.replace("Bearer ", "");
-
         const tokenData = await this.tokenService.findByToken(token);
         if (tokenData) {
             return this.userRepository.findOne({
-                where: { id: tokenData.user.id } // Предполагается, что в Token есть поле user, которое ссылается на пользователя
+                where: { id: tokenData.user.id }
             });
         }
-        return null; // Возвращаем null, если токен не найден
+        return null;
     }
 
     async getAllUsers(): Promise<User[]> {
@@ -102,5 +127,15 @@ export class UserService {
 
     async getAllPosts(): Promise<PostEntity[]> {
         return await this.postRepository.find({ relations: ["user"] });
+    }
+
+    async deleteUser(token: string): Promise<void> {
+        const tokenData = await this.tokenService.findByToken(token);
+
+        if (!tokenData) {
+            throw new UnauthorizedException("Invalid token");
+        }
+
+        await this.userRepository.delete(tokenData.user.id);
     }
 }
