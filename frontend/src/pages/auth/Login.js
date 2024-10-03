@@ -1,8 +1,12 @@
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { useNavigate } from "react-router-dom";
+import { UserContext } from "../user/userContext"; // Импортируйте UserContext
 
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const navigate = useNavigate();
+  const { updateToken } = useContext(UserContext); // Получите функцию updateToken из контекста
 
   const handleClick = () => {
     fetch("http://localhost:8000/users/login", {
@@ -21,6 +25,8 @@ export default function Login() {
           console.log("Login failed:", data.message);
         } else {
           console.log("Registration successful:", data);
+          updateToken(data.token);
+          console.log("Token saved to Local Storage:", data.token);
         }
       })
       .catch((error) => {
